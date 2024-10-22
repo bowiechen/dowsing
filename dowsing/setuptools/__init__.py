@@ -101,8 +101,18 @@ class SetuptoolsReader(BaseReader):
                     d1.packages, (list, tuple)
                 ), f"{d1.packages!r} is not a list/tuple"
                 for p in d1.packages:
-                    if p:
-                        d1.packages_dict[p] = mangle(p)
+                    match p:
+                        case str():
+                            d1.packages_dict[p] = mangle(p)
+                        case FindPackages():
+                            for p in find_packages(
+                                (self.path / p.where).as_posix(),
+                                p.exclude,
+                                p.include,
+                            ):
+                                d1.packages_dict[p] = mangle(p)
+                        case _:
+                            raise ValueError(f"Unknown packages type: {p!r}")
 
         d1.source_mapping = d1._source_mapping(self.path)
         return d1
